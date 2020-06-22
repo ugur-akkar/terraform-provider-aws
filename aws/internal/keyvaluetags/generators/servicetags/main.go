@@ -214,7 +214,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/{{ . }}"
 {{- end }}
 {{- end }}
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // map[string]*string handling
