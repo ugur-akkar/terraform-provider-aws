@@ -202,6 +202,7 @@ func testCheckTypeSetElem(is *terraform.InstanceState, attr, value string) error
 // Returns true if all attributes match, else false.
 func testCheckTypeSetElemNestedAttrsInState(is *terraform.InstanceState, attrParts []string, matchCount int, values interface{}) bool {
 	matches := make(map[string]int)
+	ids := make(map[string]bool)
 
 	for stateKey, stateValue := range is.Attributes {
 		stateKeyParts := strings.Split(stateKey, ".")
@@ -224,6 +225,8 @@ func testCheckTypeSetElemNestedAttrsInState(is *terraform.InstanceState, attrPar
 			continue
 		}
 		id := stateKeyParts[len(attrParts)-1]
+		ids[id] = true
+
 		nestedAttr := strings.Join(stateKeyParts[len(attrParts):], ".")
 
 		var match bool
@@ -244,5 +247,40 @@ func testCheckTypeSetElemNestedAttrsInState(is *terraform.InstanceState, attrPar
 			}
 		}
 	}
+
+	// account for cases where the user is trying to see if the value is unset/empty
+	// and the key is not explicitly in the instance state
+	if _, ok := values.(map[string]string); ok {
+		if len(matches) == 0 {
+			for id := range ids {
+				matches[id] = matches[id] + testCheckTypeSetEmptyElem(is.Attributes, values.(map[string]string), attrParts[0], id)
+			}
+		} else {
+			for id, count := range matches {
+				if count != matchCount {
+					matches[id] = matches[id] + testCheckTypeSetEmptyElem(is.Attributes, values.(map[string]string), attrParts[0], id)
+				}
+			}
+		}
+
+		for _, count := range matches {
+			if count == matchCount {
+				return true
+			}
+		}
+	}
+
 	return false
+}
+
+func testCheckTypeSetEmptyElem(attributes map[string]string, values map[string]string, prefix, id string) int {
+	var emptyChecks int
+	for key, value := range values {
+		if value == "0" {
+			if _, ok := attributes[fmt.Sprintf("%s.%s.%s", prefix, id, key)]; !ok {
+				emptyChecks++
+			}
+		}
+	}
+	return emptyChecks
 }

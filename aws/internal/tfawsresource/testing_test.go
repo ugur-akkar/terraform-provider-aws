@@ -2443,3 +2443,189 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 		})
 	}
 }
+
+func TestTestCheckTypeSetElemNestedAttrs_empty(t *testing.T) {
+	testCases := []struct {
+		Description       string
+		ResourceAddress   string
+		ResourceAttribute string
+		Values            map[string]string
+		TerraformState    *terraform.State
+		ExpectedError     func(err error) bool
+	}{
+		{
+			Description:       "match empty value in nested list attribute within TypeSet",
+			ResourceAddress:   "example_thing.test",
+			ResourceAttribute: "test.*",
+			Values: map[string]string{
+				"list.0.attr_a": "0",
+			},
+			TerraformState: &terraform.State{
+				Version: 3,
+				Modules: []*terraform.ModuleState{
+					{
+						Path:    []string{"root"},
+						Outputs: map[string]*terraform.OutputState{},
+						Resources: map[string]*terraform.ResourceState{
+							"example_thing.test": {
+								Type:     "example_thing",
+								Provider: "example",
+								Primary: &terraform.InstanceState{
+									ID: "11111",
+									Meta: map[string]interface{}{
+										"schema_version": 0,
+									},
+									Attributes: map[string]string{
+										"%":                        "4",
+										"id":                       "11111",
+										"test.%":                   "1",
+										"test.12345.list.#":        "1",
+										"test.12345.list.0.attr_b": "1",
+									},
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+				},
+			},
+		},
+		{
+			Description:       "match empty and non-empty value in nested list attribute within TypeSet",
+			ResourceAddress:   "example_thing.test",
+			ResourceAttribute: "test.*",
+			Values: map[string]string{
+				"list.0.attr_a": "0",
+				"list.0.attr_b": "1",
+			},
+			TerraformState: &terraform.State{
+				Version: 3,
+				Modules: []*terraform.ModuleState{
+					{
+						Path:    []string{"root"},
+						Outputs: map[string]*terraform.OutputState{},
+						Resources: map[string]*terraform.ResourceState{
+							"example_thing.test": {
+								Type:     "example_thing",
+								Provider: "example",
+								Primary: &terraform.InstanceState{
+									ID: "11111",
+									Meta: map[string]interface{}{
+										"schema_version": 0,
+									},
+									Attributes: map[string]string{
+										"%":                        "4",
+										"id":                       "11111",
+										"test.%":                   "1",
+										"test.12345.list.#":        "1",
+										"test.12345.list.0.attr_b": "1",
+									},
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+				},
+			},
+		},
+		{
+			Description:       "match empty map within TypeSet",
+			ResourceAddress:   "example_thing.test",
+			ResourceAttribute: "test.*",
+			Values: map[string]string{
+				"map.%": "0",
+			},
+			TerraformState: &terraform.State{
+				Version: 3,
+				Modules: []*terraform.ModuleState{
+					{
+						Path:    []string{"root"},
+						Outputs: map[string]*terraform.OutputState{},
+						Resources: map[string]*terraform.ResourceState{
+							"example_thing.test": {
+								Type:     "example_thing",
+								Provider: "example",
+								Primary: &terraform.InstanceState{
+									ID: "11111",
+									Meta: map[string]interface{}{
+										"schema_version": 0,
+									},
+									Attributes: map[string]string{
+										"%":                             "4",
+										"id":                            "11111",
+										"test.%":                        "1",
+										"test.12345.nested_test.#":      "1",
+										"test.12345.nested_test.0.key1": "value1",
+									},
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+				},
+			},
+		},
+		{
+			Description:       "match empty map and non-empty argument within TypeSet",
+			ResourceAddress:   "example_thing.test",
+			ResourceAttribute: "test.*",
+			Values: map[string]string{
+				"map.%":              "0",
+				"nested_test.#":      "1",
+				"nested_test.0.key1": "value1",
+			},
+			TerraformState: &terraform.State{
+				Version: 3,
+				Modules: []*terraform.ModuleState{
+					{
+						Path:    []string{"root"},
+						Outputs: map[string]*terraform.OutputState{},
+						Resources: map[string]*terraform.ResourceState{
+							"example_thing.test": {
+								Type:     "example_thing",
+								Provider: "example",
+								Primary: &terraform.InstanceState{
+									ID: "11111",
+									Meta: map[string]interface{}{
+										"schema_version": 0,
+									},
+									Attributes: map[string]string{
+										"%":                             "4",
+										"id":                            "11111",
+										"test.%":                        "1",
+										"test.12345.nested_test.#":      "1",
+										"test.12345.nested_test.0.key1": "value1",
+									},
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Description, func(t *testing.T) {
+			err := TestCheckTypeSetElemNestedAttrs(testCase.ResourceAddress, testCase.ResourceAttribute, testCase.Values)(testCase.TerraformState)
+
+			if err != nil {
+				if testCase.ExpectedError == nil {
+					t.Fatalf("expected no error, got error: %s", err)
+				}
+
+				if !testCase.ExpectedError(err) {
+					t.Fatalf("unexpected error: %s", err)
+				}
+
+				t.Logf("received expected error: %s", err)
+				return
+			}
+
+			if err == nil && testCase.ExpectedError != nil {
+				t.Fatalf("expected error, got no error")
+			}
+		})
+	}
+}
