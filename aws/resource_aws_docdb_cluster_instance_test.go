@@ -290,6 +290,59 @@ func testAccCheckAWSDocDBClusterInstanceExists(n string, v *docdb.DBInstance) re
 	}
 }
 
+func testAccAWSDocDB_smallestOrderableDBInstance() string {
+
+}
+
+type testAccSortByInstanceType []string
+
+func (s testAccSortByInstanceType) Len() int {
+    return len(s)
+}
+
+func (s testAccSortByInstanceType) Swap(i, j int) {
+    s[i], s[j] = s[j], s[i]
+}
+
+func (s testAccSortByInstanceType) Less(i, j int) bool {
+	iSplit := strings.Split(i, ".")
+	jSplit := strings.Split(j, ".")
+
+	for i, iPart := range iSplit {
+		if iPart == jSplit[i] {
+			continue
+		}
+
+		switch i {
+		case 0: // shouldn't ever end up here
+			return iPart < jSplit[i]
+		case 1: // e.g., r5, 
+			fmt.Println("Linux.")
+		case 2:
+			// freebsd, openbsd,
+			// plan9, windows...
+			fmt.Printf("%s.\n", os)
+		default:
+
+		}
+
+
+	}
+
+	types := []string{
+		"nano",
+		"micro",
+		"small",
+		"medium",
+		"large",
+		"xlarge",
+		"metal",
+	}
+
+	// very last option
+    return s[i] < s[j]
+}
+
 // Add some random to the name, to avoid collision
 func testAccAWSDocDBClusterInstanceConfig(rName string) string {
 	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
