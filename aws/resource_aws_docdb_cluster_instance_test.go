@@ -19,6 +19,7 @@ import (
 func TestAccAWSDocDBClusterInstance_basic(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.cluster_instances"
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -26,7 +27,7 @@ func TestAccAWSDocDBClusterInstance_basic(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfig(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfig(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccCheckAWSDocDBClusterInstanceAttributes(&v),
@@ -42,7 +43,7 @@ func TestAccAWSDocDBClusterInstance_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAWSDocDBClusterInstanceConfigModified(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfigModified(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccCheckAWSDocDBClusterInstanceAttributes(&v),
@@ -66,6 +67,7 @@ func TestAccAWSDocDBClusterInstance_basic(t *testing.T) {
 func TestAccAWSDocDBClusterInstance_az(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.cluster_instances"
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -73,11 +75,11 @@ func TestAccAWSDocDBClusterInstance_az(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfig_az(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfig_az(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccCheckAWSDocDBClusterInstanceAttributes(&v),
-					resource.TestMatchResourceAttr(resourceName, "availability_zone", regexp.MustCompile("^us-west-2[a-z]{1}$")),
+					resource.TestCheckResourceAttrSet(resourceName, "availability_zone"),
 				),
 			},
 
@@ -97,7 +99,7 @@ func TestAccAWSDocDBClusterInstance_az(t *testing.T) {
 func TestAccAWSDocDBClusterInstance_namePrefix(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.test"
-	rInt := acctest.RandInt()
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -105,12 +107,12 @@ func TestAccAWSDocDBClusterInstance_namePrefix(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfig_namePrefix(rInt),
+				Config: testAccAWSDocDBClusterInstanceConfig_namePrefix(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccCheckAWSDocDBClusterInstanceAttributes(&v),
-					resource.TestCheckResourceAttr(resourceName, "db_subnet_group_name", fmt.Sprintf("tf-test-%d", rInt)),
-					resource.TestMatchResourceAttr(resourceName, "identifier", regexp.MustCompile("^tf-cluster-instance-")),
+					resource.TestCheckResourceAttr(resourceName, "db_subnet_group_name", rName),
+					resource.TestMatchResourceAttr(resourceName, "identifier", regexp.MustCompile("^tf-acc-test-")),
 				),
 			},
 
@@ -130,6 +132,7 @@ func TestAccAWSDocDBClusterInstance_namePrefix(t *testing.T) {
 func TestAccAWSDocDBClusterInstance_generatedName(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.test"
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -137,11 +140,11 @@ func TestAccAWSDocDBClusterInstance_generatedName(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfig_generatedName(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfig_generatedName(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccCheckAWSDocDBClusterInstanceAttributes(&v),
-					resource.TestMatchResourceAttr(resourceName, "identifier", regexp.MustCompile("^tf-")),
+					resource.TestMatchResourceAttr(resourceName, "identifier", regexp.MustCompile("^tf-acc-test-")),
 				),
 			},
 
@@ -161,6 +164,7 @@ func TestAccAWSDocDBClusterInstance_generatedName(t *testing.T) {
 func TestAccAWSDocDBClusterInstance_kmsKey(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.cluster_instances"
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -168,7 +172,7 @@ func TestAccAWSDocDBClusterInstance_kmsKey(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfigKmsKey(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfigKmsKey(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					resource.TestCheckResourceAttrPair(resourceName, "kms_key_id", "aws_kms_key.foo", "arn"),
@@ -192,6 +196,7 @@ func TestAccAWSDocDBClusterInstance_kmsKey(t *testing.T) {
 func TestAccAWSDocDBClusterInstance_disappears(t *testing.T) {
 	var v docdb.DBInstance
 	resourceName := "aws_docdb_cluster_instance.cluster_instances"
+	rName := acctest.RandomWithPrefix("tf-acc-test")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -199,7 +204,7 @@ func TestAccAWSDocDBClusterInstance_disappears(t *testing.T) {
 		CheckDestroy: testAccCheckDocDBClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSDocDBClusterInstanceConfig(acctest.RandInt()),
+				Config: testAccAWSDocDBClusterInstanceConfig(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDocDBClusterInstanceExists(resourceName, &v),
 					testAccAWSDocDBClusterInstanceDisappears(&v),
@@ -218,8 +223,8 @@ func testAccCheckAWSDocDBClusterInstanceAttributes(v *docdb.DBInstance) resource
 			return fmt.Errorf("bad engine, expected \"docdb\": %#v", *v.Engine)
 		}
 
-		if !strings.HasPrefix(*v.DBClusterIdentifier, "tf-docdb-cluster") {
-			return fmt.Errorf("Bad Cluster Identifier prefix:\nexpected: %s\ngot: %s", "tf-docdb-cluster", *v.DBClusterIdentifier)
+		if !strings.HasPrefix(*v.DBClusterIdentifier, "tf-acc-test") {
+			return fmt.Errorf("Bad Cluster Identifier prefix:\nexpected: %s-*\ngot: %s", "tf-acc-test", *v.DBClusterIdentifier)
 		}
 
 		return nil
@@ -286,84 +291,87 @@ func testAccCheckAWSDocDBClusterInstanceExists(n string, v *docdb.DBInstance) re
 }
 
 // Add some random to the name, to avoid collision
-func testAccAWSDocDBClusterInstanceConfig(n int) string {
-	return fmt.Sprintf(`
+func testAccAWSDocDBClusterInstanceConfig(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_docdb_cluster" "default" {
-  cluster_identifier  = "tf-docdb-cluster-test-%d"
-  availability_zones  = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  cluster_identifier  = %[1]q
+  availability_zones  = [
+    data.aws_availability_zones.available.names[0],
+    data.aws_availability_zones.available.names[1],
+    data.aws_availability_zones.available.names[2]
+  ]
   master_username     = "foo"
   master_password     = "mustbeeightcharaters"
   skip_final_snapshot = true
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
-  identifier         = "tf-cluster-instance-%d"
+  identifier         = %[1]q
   cluster_identifier = aws_docdb_cluster.default.id
-  instance_class     = "db.r4.large"
+  instance_class     = "db.r5.large"
   promotion_tier     = "3"
 }
-`, n, n)
+`, rName))
 }
 
-func testAccAWSDocDBClusterInstanceConfigModified(n int) string {
-	return fmt.Sprintf(`
+func testAccAWSDocDBClusterInstanceConfigModified(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_docdb_cluster" "default" {
-  cluster_identifier  = "tf-docdb-cluster-test-%d"
-  availability_zones  = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  cluster_identifier  = %[1]q
+  availability_zones  = [
+    data.aws_availability_zones.available.names[0],
+    data.aws_availability_zones.available.names[1],
+    data.aws_availability_zones.available.names[2]
+  ]
   master_username     = "foo"
   master_password     = "mustbeeightcharaters"
   skip_final_snapshot = true
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
-  identifier                 = "tf-cluster-instance-%d"
+  identifier                 = %[1]q
   cluster_identifier         = aws_docdb_cluster.default.id
-  instance_class             = "db.r4.large"
+  instance_class             = "db.r5.large"
   auto_minor_version_upgrade = false
   promotion_tier             = "3"
 }
-`, n, n)
+`, rName))
 }
 
-func testAccAWSDocDBClusterInstanceConfig_az(n int) string {
-	return fmt.Sprintf(`
-data "aws_availability_zones" "available" {
-  state = "available"
-
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
-  }
-}
-
+func testAccAWSDocDBClusterInstanceConfig_az(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_docdb_cluster" "default" {
-  cluster_identifier  = "tf-docdb-cluster-test-%d"
-  availability_zones  = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1], data.aws_availability_zones.available.names[2]]
+  cluster_identifier  = %[1]q
+  availability_zones  = [
+    data.aws_availability_zones.available.names[0],
+    data.aws_availability_zones.available.names[1],
+    data.aws_availability_zones.available.names[2]
+  ]
   master_username     = "foo"
   master_password     = "mustbeeightcharaters"
   skip_final_snapshot = true
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
-  identifier         = "tf-cluster-instance-%d"
+  identifier         = %[1]q
   cluster_identifier = aws_docdb_cluster.default.id
   instance_class     = "db.r4.large"
   promotion_tier     = "3"
   availability_zone  = data.aws_availability_zones.available.names[0]
 }
-`, n, n)
+`, rName))
 }
 
-func testAccAWSDocDBClusterInstanceConfig_namePrefix(n int) string {
-	return fmt.Sprintf(`
+func testAccAWSDocDBClusterInstanceConfig_namePrefix(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_docdb_cluster_instance" "test" {
-  identifier_prefix  = "tf-cluster-instance-"
+  identifier_prefix  = "tf-acc-docdb-"
   cluster_identifier = aws_docdb_cluster.test.id
   instance_class     = "db.r4.large"
 }
 
 resource "aws_docdb_cluster" "test" {
-  cluster_identifier   = "tf-docdb-cluster-%d"
+  cluster_identifier   = %[1]q
   master_username      = "root"
   master_password      = "password"
   db_subnet_group_name = aws_docdb_subnet_group.test.name
@@ -374,46 +382,46 @@ resource "aws_vpc" "test" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "terraform-testacc-docdb-cluster-instance-name-prefix"
+    Name = %[1]q
   }
 }
 
 resource "aws_subnet" "a" {
   vpc_id            = aws_vpc.test.id
   cidr_block        = "10.0.0.0/24"
-  availability_zone = "us-west-2a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    Name = "tf-acc-docdb-cluster-instance-name-prefix-a"
+    Name = "%[1]s-a"
   }
 }
 
 resource "aws_subnet" "b" {
   vpc_id            = aws_vpc.test.id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-west-2b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
-    Name = "tf-acc-docdb-cluster-instance-name-prefix-b"
+    Name = "%[1]s-b
   }
 }
 
 resource "aws_docdb_subnet_group" "test" {
-  name       = "tf-test-%d"
+  name       = %[1]q
   subnet_ids = [aws_subnet.a.id, aws_subnet.b.id]
 }
-`, n, n)
+`, rName))
 }
 
-func testAccAWSDocDBClusterInstanceConfig_generatedName(n int) string {
-	return fmt.Sprintf(`
+func testAccAWSDocDBClusterInstanceConfig_generatedName(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_docdb_cluster_instance" "test" {
   cluster_identifier = aws_docdb_cluster.test.id
   instance_class     = "db.r4.large"
 }
 
 resource "aws_docdb_cluster" "test" {
-  cluster_identifier   = "tf-docdb-cluster-%d"
+  cluster_identifier   = %[1]q
   master_username      = "root"
   master_password      = "password"
   db_subnet_group_name = aws_docdb_subnet_group.test.name
@@ -424,41 +432,41 @@ resource "aws_vpc" "test" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "terraform-testacc-docdb-cluster-instance-generated-name"
+    Name = %[1]q
   }
 }
 
 resource "aws_subnet" "a" {
   vpc_id            = aws_vpc.test.id
   cidr_block        = "10.0.0.0/24"
-  availability_zone = "us-west-2a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    Name = "tf-acc-docdb-cluster-instance-generated-name-a"
+    Name = "%[1]s-a"
   }
 }
 
 resource "aws_subnet" "b" {
   vpc_id            = aws_vpc.test.id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-west-2b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
-    Name = "tf-acc-docdb-cluster-instance-generated-name-b"
+    Name = "%[1]s-b"
   }
 }
 
 resource "aws_docdb_subnet_group" "test" {
-  name       = "tf-test-%d"
+  name       = %[1]q
   subnet_ids = [aws_subnet.a.id, aws_subnet.b.id]
 }
-`, n, n)
+`, rName))
 }
 
-func testAccAWSDocDBClusterInstanceConfigKmsKey(n int) string {
-	return fmt.Sprintf(`
+func testAccAWSDocDBClusterInstanceConfigKmsKey(rName string) string {
+	return composeConfig(testAccAvailableAZsNoOptInConfig(), fmt.Sprintf(`
 resource "aws_kms_key" "foo" {
-  description = "Terraform acc test %d"
+  description = "Terraform acc test %[1]s"
 
   policy = <<POLICY
 {
@@ -480,8 +488,12 @@ POLICY
 }
 
 resource "aws_docdb_cluster" "default" {
-  cluster_identifier  = "tf-docdb-cluster-test-%d"
-  availability_zones  = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  cluster_identifier  = %[1]q
+  availability_zones  = [
+    data.aws_availability_zones.available.names[0],
+    data.aws_availability_zones.available.names[1],
+    data.aws_availability_zones.available.names[2]
+  ]
   master_username     = "foo"
   master_password     = "mustbeeightcharaters"
   storage_encrypted   = true
@@ -490,9 +502,9 @@ resource "aws_docdb_cluster" "default" {
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
-  identifier         = "tf-cluster-instance-%d"
+  identifier         = %[1]q
   cluster_identifier = aws_docdb_cluster.default.id
   instance_class     = "db.r4.large"
 }
-`, n, n, n)
+`, rName))
 }
